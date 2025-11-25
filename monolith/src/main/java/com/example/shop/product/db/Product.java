@@ -1,8 +1,10 @@
-package com.example.shop.product;
+package com.example.shop.product.db;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
+@Data
 public class Product {
     @Id
     @GeneratedValue
@@ -10,11 +12,4 @@ public class Product {
     private String name;
     private double price;
 
-    public Product() {
-    }
-
-    public Product(String n, double p) {
-        name = n;
-        price = p;
-    }
 }

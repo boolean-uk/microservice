@@ -1,22 +1,22 @@
 package com.example.shop.order;
 
+import com.example.shop.order.db.Order;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
-    private final OrderRepository repo;
 
-    public OrderService(OrderRepository r) {
-        this.repo = r;
+    private final OrderRepository orderRepository;
+
+    public Order create(Order order) {
+        return orderRepository.save(order);
     }
 
-    public OrderEntity create(OrderEntity o) {
-        return repo.save(o);
-    }
-
-    public List<OrderEntity> all() {
-        return repo.findAll();
+    public List<Order> all() {
+        return orderRepository.findAll();
     }
 }
