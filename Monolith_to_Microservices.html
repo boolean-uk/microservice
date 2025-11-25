@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Monolith to Microservices – End-to-End Journey</title>
+<style>
+    :root {
+      --bg: #020617;
+      --bg-card: #0b1120;
+      --border: #1e293b;
+      --accent: #38bdf8;
+      --accent-soft: #0f172a;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --success: #22c55e;
+      --radius: 16px;
+      --shadow: 0 18px 45px rgba(15,23,42,0.85);
+      --shadow-lg: 0 25px 60px rgba(0,0,0,0.5);
+      --shadow-card: 0 8px 24px rgba(0,0,0,0.3);
+      --gradient-primary: linear-gradient(135deg, #38bdf8 0%, #22c55e 100%);
+      --gradient-card: linear-gradient(135deg, rgba(56,189,248,0.1) 0%, rgba(34,197,94,0.05) 100%);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      color: var(--text);
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      padding:32px 16px 40px;
+    }
+    .deck{
+      width: min(1600px, 100%);
+    }
+    .frame{
+      background: linear-gradient(135deg,rgba(2,6,23,0.95) 0%,rgba(11,17,32,0.95) 100%);
+      border-radius: 24px;
+      padding: 20px 28px;
+      border:1px solid rgba(56,189,248,0.2);
+      box-shadow: var(--shadow-lg);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom: 24px;
+      position:sticky;
+      top:16px;
+      z-index:10;
+      backdrop-filter: blur(20px) saturate(180%);
+    }
+    .title-block h1{
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      background:var(--gradient-primary);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .title-pill{
+      font-size:18px;
+      text-transform:uppercase;
+      letter-spacing:0.16em;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .chapter-select{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:18px;
+      color:var(--muted);
+    }
+    select{
+      background:#020617;
+      border-radius:999px;
+      border:1px solid rgba(56,189,248,0.3);
+      color:var(--text);
+      padding:8px 16px;
+      font-size:16px;
+      outline:none;
+      cursor:pointer;
+      transition:all 0.3s ease;
+    }
+    select:hover{
+      border-color:rgba(56,189,248,0.5);
+      background:rgba(56,189,248,0.05);
+    }
+    select:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(56,189,248,0.1);
+    }
+    .nav-buttons{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .btn{
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.4);
+      background:#020617;
+      color:var(--text);
+      padding:8px 16px;
+      font-size:16px;
+      text-transform:uppercase;
+      letter-spacing:0.14em;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      transition: all 0.3s ease;
+      font-weight:500;
+    }
+    .btn:hover{
+      background:rgba(56,189,248,0.1);
+      border-color:rgba(56,189,248,0.5);
+      transform:translateY(-1px);
+    }
+    .btn.primary{
+      background: var(--gradient-primary);
+      border-color: transparent;
+      color:#0b1120;
+      font-weight:600;
+      box-shadow: 0 4px 12px rgba(56,189,248,0.3);
+    }
+    .btn.primary:hover{
+      box-shadow: 0 6px 20px rgba(56,189,248,0.4);
+      transform:translateY(-2px);
+    }
+    .btn span.icon{
+      font-size:20px;
+    }
+    .counter{
+      font-size:18px;
+      color:var(--muted);
+    }
+
+    .slide{
+      background:radial-gradient(circle at top left,#020617 0,#0b1120 50%,#020617 100%);
+      border-radius: var(--radius);
+      border:1px solid rgba(56,189,248,0.15);
+      box-shadow: var(--shadow-lg);
+      padding:64px 72px 72px;
+      margin-bottom:24px;
+      display:none;
+      position:relative;
+      overflow:hidden;
+    }
+    .slide::before{
+      content:'';
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      height:4px;
+      background:var(--gradient-primary);
+      opacity:0.6;
+    }
+    .slide.active{
+      display:block;
+      animation:fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn{
+      from{opacity:0;transform:translateY(10px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+
+    .slide.part{
+      text-align:center;
+      padding:80px 40px 80px;
+      border-style:dashed;
+      border-color:rgba(56,189,248,0.3);
+      border-width:2px;
+      background:linear-gradient(135deg, rgba(56,189,248,0.05) 0%, rgba(34,197,94,0.03) 100%);
+      position:relative;
+    }
+    .slide.part::before{
+      content:'';
+      position:absolute;
+      top:20px;
+      left:20px;
+      right:20px;
+      bottom:20px;
+      border:1px solid rgba(56,189,248,0.2);
+      border-radius:12px;
+      pointer-events:none;
+    }
+    .slide.part h2{
+      font-size:16px;
+      text-transform:uppercase;
+      letter-spacing:0.3em;
+      color:var(--accent);
+      margin-bottom:16px;
+      font-weight:600;
+    }
+    .slide.part h1{
+      font-size:42px;
+      margin-bottom:20px;
+      font-weight:700;
+      background:var(--gradient-primary);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      letter-spacing:-0.02em;
+    }
+    .slide.part p{
+      font-size:20px;
+      color:var(--muted);
+      max-width:600px;
+      margin:16px auto 0;
+      line-height:1.7;
+    }
+
+    .headline{
+      font-size:28px;
+      margin-bottom:8px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:700;
+      color:var(--text);
+      letter-spacing:-0.02em;
+    }
+    .headline-tag{
+      font-size:12px;
+      padding:4px 12px;
+      border-radius:999px;
+      border:1px solid rgba(56,189,248,0.3);
+      background:rgba(56,189,248,0.1);
+      color:var(--accent);
+      text-transform:uppercase;
+      letter-spacing:0.16em;
+      font-weight:600;
+    }
+    .subtitle{
+      font-size:18px;
+      color:var(--muted);
+      margin-bottom:24px;
+      line-height:1.6;
+      font-weight:400;
+    }
+
+    .two-col{
+      display:grid;
+      grid-template-columns: minmax(0,1.15fr) minmax(0,0.95fr);
+      gap:18px;
+      margin-top:6px;
+    }
+    .card{
+      background: var(--gradient-card);
+      border-radius: 16px;
+      border:1px solid rgba(56,189,248,0.15);
+      padding:28px 36px 36px;
+      transition:all 0.3s ease;
+      position:relative;
+      box-shadow:var(--shadow-card);
+    }
+    .card::before{
+      content:'';
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      height:2px;
+      background:var(--gradient-primary);
+      border-radius:16px 16px 0 0;
+      opacity:0.5;
+    }
+    .card:hover{
+      transform:translateY(-2px);
+      box-shadow:0 12px 32px rgba(0,0,0,0.4);
+      border-color:rgba(56,189,248,0.25);
+    }
+    .card h3{
+      font-size:22px;
+      margin-bottom:12px;
+      font-weight:600;
+      color:var(--text);
+      letter-spacing:-0.01em;
+    }
+    .card p{
+      font-size:17px;
+      color:var(--muted);
+      line-height:1.7;
+      margin-bottom:12px;
+    }
+    ul{
+      padding-left:24px;
+      margin:8px 0;
+      list-style:none;
+    }
+    li{
+      font-size:18px;
+      line-height:1.7;
+      margin:6px 0;
+      color:#e2e8f0;
+      position:relative;
+      padding-left:24px;
+    }
+    li::before{
+      content:'→';
+      position:absolute;
+      left:0;
+      color:var(--accent);
+      font-weight:bold;
+      opacity:0.7;
+    }
+    li strong{
+      color:var(--accent);
+      font-weight:600;
+    }
+    li span.dim{
+      color:var(--muted);
+      font-size:18px;
+    }
+
+    .diagram{
+      border-radius:12px;
+      border:1px solid rgba(56,189,248,0.2);
+      background: linear-gradient(135deg, rgba(56,189,248,0.05) 0%, rgba(34,197,94,0.03) 100%);
+      padding:16px 20px 20px;
+      margin-top:12px;
+      box-shadow:inset 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .diagram-label{
+      font-size:14px;
+      text-transform:uppercase;
+      letter-spacing:0.16em;
+      color:var(--accent);
+      margin-bottom:12px;
+      font-weight:600;
+    }
+    .diagram-grid{
+      display:grid;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      gap:8px;
+      font-size:16px;
+    }
+    .chip{
+      border-radius:8px;
+      border:1px solid rgba(56,189,248,0.3);
+      padding:8px 12px;
+      text-align:center;
+      background:rgba(56,189,248,0.1);
+      color:#e5e7eb;
+      font-weight:500;
+      transition:all 0.2s ease;
+    }
+    .chip:hover{
+      background:rgba(56,189,248,0.2);
+      border-color:rgba(56,189,248,0.5);
+      transform:scale(1.05);
+    }
+
+    .note{
+      font-size:16px;
+      color:#94a3b8;
+      margin-top:12px;
+      line-height:1.6;
+      font-style:italic;
+      padding-left:16px;
+      border-left:2px solid rgba(56,189,248,0.3);
+    }
+
+    pre{
+      background:linear-gradient(135deg, #0b1120 0%, #020617 100%);
+      border-radius:12px;
+      border:1px solid rgba(56,189,248,0.2);
+      padding:16px 20px;
+      font-size:16px;
+      color:#e5e7eb;
+      overflow-x:auto;
+      margin-top:12px;
+      box-shadow:inset 0 2px 8px rgba(0,0,0,0.3);
+      position:relative;
+    }
+    pre::before{
+      content:'';
+      position:absolute;
+      top:0;
+      left:0;
+      width:4px;
+      height:100%;
+      background:var(--gradient-primary);
+      border-radius:12px 0 0 12px;
+    }
+    code{
+      font-family:ui-monospace,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      font-size:15px;
+      line-height:1.6;
+    }
+
+    @media (max-width: 840px){
+      .frame{flex-direction:column;align-items:flex-start;gap:10px;}
+      .two-col{grid-template-columns: minmax(0,1fr);}
+    }
+  
+/* Center deck */
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Center every slide */
+.slide {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  aspect-ratio: 1 / 1;
+  height: 1300px; /* increased for larger canvas */
+  width: 1300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56,189,248,0.3) transparent;
+}
+.slide::-webkit-scrollbar {
+  width: 8px;
+}
+.slide::-webkit-scrollbar-track {
+  background: transparent;
+}
+.slide::-webkit-scrollbar-thumb {
+  background: rgba(56,189,248,0.3);
+  border-radius: 4px;
+}
+.slide::-webkit-scrollbar-thumb:hover {
+  background: rgba(56,189,248,0.5);
+}
+</style>
+</head>
+<body>
+<div class="deck">
+<div class="frame">
+<div class="title-block">
+<h1>Monolith → Microservices Journey</h1>
+<div class="title-pill">Architecture &amp; Patterns</div>
+</div>
+<div style="display:flex;align-items:center;gap:14px;">
+<div class="chapter-select">
+          Part
+          <select id="chapter-select">
+<option value="1">1 · Monoliths</option>
+<option value="2">2 · Microservices</option>
+<option value="3">3 · Migration Strategy</option>
+<option value="4">4 · Migration Patterns</option>
+<option value="5">5 · Comms &amp; Reliability</option>
+<option value="6">6 · Data &amp; Transactions</option>
+<option value="7">7 · Observability &amp; Ops</option>
+<option value="8">8 · Org &amp; Anti-Patterns</option>
+</select>
+</div>
+<div class="nav-buttons">
+<button class="btn" id="prev-btn"><span class="icon">←</span>Prev</button>
+<button class="btn primary" id="next-btn">Next<span class="icon">→</span></button>
+<div class="counter"><span id="current-slide">1</span>/<span id="total-slides">1</span></div>
+</div>
+</div>
+</div>
+<!-- PART 1 -->
+<section class="slide part" data-part="1">
+<h2>Part 1</h2>
+<h1>Understanding Monolithic Architectures</h1>
+<p>
+        We start by clarifying what a monolith really is, why it’s often the most pragmatic starting point,
+        and what happens as it grows. This gives the baseline to understand whether microservices
+        are genuinely needed.
+      </p>
+</section>
+<section class="slide" data-part="1">
+<div class="headline">
+        1. What is a Monolith?
+        <span class="headline-tag">Concept</span>
+</div>
+<div class="subtitle">
+        A monolithic application is deployed as a single unit: one codebase, one build artifact, one runtime, one database.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Definition</h3>
+<p>
+            A monolith is a software system where all features are packaged, deployed, and scaled together. Internal modules
+            call each other via in-process calls and share a single database schema.
+          </p>
+<ul>
+<li>Single deployable (e.g., one JAR/WAR, container image, or app service).</li>
+<li>Shared database used by all modules.</li>
+<li>Layers (UI, business, persistence) in one codebase.</li>
+<li>Often the first architecture used for a new product.</li>
+<li>Three types: single-process (traditional), modular (well-structured), and distributed monolith (microservices in name only).</li><li>Common examples: Rails apps, Spring Boot monoliths, Django applications.</li><li>Deployment typically involves a single artifact (WAR, JAR, container image).</li></ul>
+</div>
+<div class="card">
+<h3>Monolith “Diagram” – Mental Model</h3>
+<div class="diagram">
+<div class="diagram-label">High-Level View</div>
+<div class="diagram-grid">
+<div class="chip">Client</div>
+<div class="chip">Monolithic App</div>
+<div class="chip">Single DB</div>
+</div>
+</div>
+<p class="note">
+            At this stage, the important idea is the <strong>deployment unit</strong>, not the programming language or framework.
+          </p>
+</div>
+</div>
+</section>
+<section class="slide" data-part="1">
+<div class="headline">
+        2. Strengths of Monolithic Architecture
+        <span class="headline-tag">Architecture</span>
+</div>
+<div class="subtitle">
+        Monoliths are usually chosen first because they maximize speed and simplicity when a product is young.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Why Monoliths Are a Great Start</h3>
+<ul>
+<li><strong>Simple mental model</strong> – one place to look for code and behavior.</li>
+<li><strong>Fast local dev</strong> – run everything on a laptop, no complex infra.</li>
+<li><strong>Easy testing</strong> – end-to-end tests don’t cross network boundaries.</li>
+<li><strong>Refactoring friendly</strong> – cross-cutting changes are easier in one codebase.</li>
+<li><strong>Infrastructure light</strong> – no service discovery, message brokers, or gateways required early on.</li>
+<li><strong>Performance</strong> – no network latency between modules; in-process calls are fast.</li><li><strong>Transaction management</strong> – ACID transactions across all modules are straightforward.</li><li><strong>Debugging</strong> – single process makes stack traces and debugging tools more effective.</li><li><strong>Cost-effective</strong> – fewer infrastructure components to manage and pay for.</li></ul>
+</div>
+<div class="card">
+<h3>Where Monoliths Shine</h3>
+<ul>
+<li>Early-stage products with uncertain requirements.</li>
+<li>Small teams (1–10 engineers) working closely together.</li>
+<li>Systems without extreme scalability or availability needs.</li>
+<li>Organizations without deep operational/distributed systems experience.</li>
+<li>Studies show monoliths can handle millions of requests per day with proper architecture.</li><li>Many successful companies (GitHub, Shopify early days) started and scaled with monoliths.</li><li>The "monolith first" approach is recommended by Martin Fowler and other experts.</li></ul>
+<p class="note">
+            A well-structured monolith can serve you for a long time. Microservices are not an upgrade by default;
+            they are a different set of trade-offs.
+          </p>
+</div>
+</div>
+</section>
+<section class="slide" data-part="1">
+<div class="headline">
+        3. Weaknesses of Large Monoliths
+        <span class="headline-tag">Architecture</span>
+</div>
+<div class="subtitle">
+        As a monolith grows and more teams contribute, tight coupling and shared state can turn it into “big ball of mud”.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Technical Pain</h3>
+<ul>
+<li><strong>Slow deployments</strong> – deploying any feature means redeploying everything.</li>
+<li><strong>High blast radius</strong> – a small bug can bring down the entire app.</li>
+<li><strong>Tight coupling</strong> – modules rely on each other’s internals and shared DB tables.</li>
+<li><strong>Scaling limits</strong> – must scale the whole app, even for a single hot feature.</li>
+<li><strong>Tech lock-in</strong> – difficult to adopt new stacks for specific areas.</li>
+<li><strong>Memory footprint</strong> – entire application loaded even if only one feature is used.</li><li><strong>Long startup times</strong> – large codebases can take minutes to start.</li><li><strong>Testing bottlenecks</strong> – full test suite runs for every change, even small ones.</li><li><strong>Resource waste</strong> – cannot optimize resource allocation per feature.</li></ul>
+</div>
+<div class="card">
+<h3>Organizational Pain</h3>
+<ul>
+<li>Multiple teams touching the same modules and tables.</li>
+<li>Merge conflicts and coordination overhead increase sharply.</li>
+<li>Releases become rarer, riskier, and require code freezes.</li>
+<li>New hires take weeks just to navigate the codebase.</li>
+<li>Conway's Law: architecture reflects organizational structure. Monoliths often lead to monolithic teams.</li><li>Knowledge silos develop as codebase grows, making onboarding difficult.</li><li>Release coordination becomes a bottleneck as more teams contribute.</li></ul>
+<p class="note">
+            These are <em>symptoms</em> that you may have outgrown the monolith, not proof that monoliths are bad.
+          </p>
+</div>
+</div>
+</section>
+<section class="slide" data-part="1">
+<div class="headline">
+        4. When to Keep a Monolith
+        <span class="headline-tag">Guidance</span>
+</div>
+<div class="subtitle">
+        The goal is not microservices. The goal is sustainable delivery and reliability. Sometimes that means staying monolithic for longer.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Good Reasons to Stay Monolithic</h3>
+<ul>
+<li>Your product and domain are still evolving rapidly.</li>
+<li>The team is small and can coordinate effectively.</li>
+<li>Current performance, reliability, and release cadence are acceptable.</li>
+<li>Operational maturity (monitoring, automation) is limited.</li>
+</ul>
+<h3 style="margin-top:8px;">Signals You Can Wait</h3>
+<ul>
+<li>Releases are frequent and not too stressful.</li>
+<li>Most features can be implemented in a single place without major cross-module changes.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Preparing for Future Splits</h3>
+<ul>
+<li>Enforce modular structure and clear internal APIs.</li>
+<li>Reduce “reach into everything” patterns (e.g., shared util god-classes).</li>
+<li>Avoid cross-module DB access – treat some modules as “owners” of tables.</li>
+<li>Extract domain concepts (Orders, Billing, Inventory) behind interfaces.</li>
+</ul>
+<p class="note">
+            Think of this as “monolith with microservices-ready internals”.
+          </p>
+</div>
+</div>
+</section>
+<!-- PART 2 -->
+<section class="slide part" data-part="2">
+<h2>Part 2</h2>
+<h1>Microservices Fundamentals</h1>
+<p>
+        Having seen where monoliths work and where they hurt, we now examine microservices:
+        what they are, what they promise, and what new kinds of complexity they introduce.
+      </p>
+</section>
+<section class="slide" data-part="2">
+<div class="headline">
+        5. Microservices Architecture Overview
+        <span class="headline-tag">Architecture</span>
+</div>
+<div class="subtitle">
+        A microservices architecture decomposes a system into a suite of small, autonomous services, each owning its data and behavior.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Concept</h3>
+<ul>
+<li>Each service focuses on a specific business capability.</li>
+<li>Services are independently deployable and scalable.</li>
+<li>Services communicate via network protocols (HTTP/gRPC/messaging).</li>
+<li>Each service owns its database (no shared schemas).</li>
+<li>Services typically range from 100-1000 lines of code to several thousand, but size is less important than autonomy.</li><li>Communication can be synchronous (REST, gRPC) or asynchronous (messaging, events).</li><li>Each service should be deployable independently without coordinating with other services.</li><li>Services are organized around business capabilities, not technical layers.</li></ul>
+<p class="note">
+            This is as much an <strong>organizational</strong> model (teams owning services) as it is a technical model.
+          </p>
+</div>
+<div class="card">
+<h3>High-Level Structure</h3>
+<div class="diagram">
+<div class="diagram-label">Typical Layout</div>
+<div class="diagram-grid">
+<div class="chip">Client</div>
+<div class="chip">API Gateway</div>
+<div class="chip">Auth / Edge</div>
+<div class="chip">Order Service</div>
+<div class="chip">Billing Service</div>
+<div class="chip">Inventory Service</div>
+<div class="chip">Order DB</div>
+<div class="chip">Billing DB</div>
+<div class="chip">Inventory DB</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="slide" data-part="2">
+<div class="headline">
+        6. Benefits of Microservices
+        <span class="headline-tag">Architecture</span>
+</div>
+<div class="subtitle">
+        Microservices trade intra-process simplicity for flexibility in deployment, scaling, and team autonomy.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Technical Benefits</h3>
+<ul>
+<li>Independent deployment and rollback of services.</li>
+<li>Independent scaling: scale Checkout without scaling Catalog.</li>
+<li>Technology diversity: use the right DB/stack per service.</li>
+<li>Better fault isolation when resilience patterns are applied.</li>
+<li><strong>Technology diversity</strong> – use Node.js for real-time features, Python for ML, Java for enterprise logic.</li><li><strong>Fault isolation</strong> – one service failure doesn't bring down the entire system.</li><li><strong>Performance optimization</strong> – optimize each service for its specific workload.</li><li><strong>Independent scaling</strong> – scale high-traffic services independently (e.g., 10x for checkout, 1x for reports).</li></ul>
+</div>
+<div class="card">
+<h3>Business &amp; Org Benefits</h3>
+<ul>
+<li>Teams own services end-to-end (you build it, you run it).</li>
+<li>Parallel delivery: multiple teams can ship without blocking each other.</li>
+<li>Faster time-to-market for localized changes.</li>
+<li>Enables "you build it, you run it" culture, increasing ownership and accountability.</li><li>Allows parallel development: multiple teams can work simultaneously without blocking.</li><li>Faster feature delivery for isolated changes (days vs weeks in large monoliths).</li><li>Better alignment with business structure: teams organized by business domain.</li></ul>
+<p class="note">
+            These benefits materialize only if service boundaries and ownership are thoughtfully designed.
+          </p>
+</div>
+</div>
+</section>
+<section class="slide" data-part="2">
+<div class="headline">
+        7. Challenges &amp; Costs of Microservices
+        <span class="headline-tag">Architecture</span>
+</div>
+<div class="subtitle">
+        Microservices solve some problems but introduce others, especially around operations and data consistency.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Technical Complexity</h3>
+<ul>
+<li>Network failures, latency, retries, timeouts, and backpressure.</li>
+<li>No ACID transactions across services – need Sagas and eventual consistency.</li>
+<li>Distributed debugging: one request touches many services.</li>
+<li>Testing challenges: integration and end-to-end suites are heavier.</li>
+<li><strong>Network latency</strong> – every service call adds network overhead (typically 1-10ms per hop).</li><li><strong>Data consistency</strong> – eventual consistency requires careful design and user experience considerations.</li><li><strong>Distributed transactions</strong> – no ACID across services; must use Sagas or compensate manually.</li><li><strong>Testing complexity</strong> – need contract testing, integration testing, and distributed tracing.</li></ul>
+</div>
+<div class="card">
+<h3>Operational &amp; Org Costs</h3>
+<ul>
+<li>More services to deploy, monitor, secure, and upgrade.</li>
+<li>Need for mature CI/CD, observability, and incident management.</li>
+<li>Risk of a “distributed monolith” if boundaries are poor.</li>
+<li>Operational overhead: need to monitor, deploy, and maintain many more services.</li><li>Cost: more infrastructure, more tooling, more operational staff.</li><li>Security: more attack surface, need service-to-service authentication.</li><li>Complexity: debugging distributed systems requires sophisticated tooling and skills.</li></ul>
+<p class="note">
+            Microservices require investing in a platform and operations culture, not just code changes.
+          </p>
+</div>
+</div>
+</section>
+<section class="slide" data-part="2">
+<div class="headline">
+        8. When Microservices Make Sense
+        <span class="headline-tag">Guidance</span>
+</div>
+<div class="subtitle">
+        You should adopt microservices to solve concrete business and delivery problems, not to follow a trend.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Good Triggers</h3>
+<ul>
+<li>Many teams are blocked by a shared monolith.</li>
+<li>Different subdomains evolve at very different speeds.</li>
+<li>Individual capabilities have distinct scaling / availability needs.</li>
+<li>Regulatory/security constraints require isolation of certain domains.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Prerequisites</h3>
+<ul>
+<li>Basic observability: logs, metrics, alerting, and tracing.</li>
+<li>Automated testing and CI/CD are in place for the monolith.</li>
+<li>Rough domain understanding (bounded contexts, key capabilities).</li>
+<li>Leadership aligned on trade-offs and willing to invest in platform work.</li>
+</ul>
+</div>
+</div>
+</section>
+<!-- PART 3 -->
+<section class="slide part" data-part="3">
+<h2>Part 3</h2>
+<h1>Migration Strategy &amp; Roadmap</h1>
+<p>
+        How do we move from a large, successful monolith to a microservices architecture without a dangerous big-bang rewrite?
+        This part focuses on strategy and sequencing.
+      </p>
+</section>
+<section class="slide" data-part="3">
+<div class="headline">
+        9. Why Migrate from a Monolith?
+        <span class="headline-tag">Strategy</span>
+</div>
+<div class="subtitle">
+        Migration is justified only when it supports business goals: faster delivery, better reliability, or cost-effective scaling.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Good Reasons</h3>
+<ul>
+<li>Releases are too slow and risky; features miss market windows.</li>
+<li>Teams constantly block each other on shared modules and DB tables.</li>
+<li>Scaling the monolith is expensive or hitting hard limits.</li>
+<li>Some domains need different availability or compliance properties.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Bad Reasons</h3>
+<ul>
+<li>“Everyone cool is doing microservices”.</li>
+<li>Desire to rewrite everything in a new language.</li>
+<li>Trying to fix bad code or poor testing purely with a new architecture.</li>
+</ul>
+<p class="note">
+            Be explicit: <strong>what pain</strong> will microservices reduce, and how will you measure it (lead time, MTTR, scalability)?
+          </p>
+</div>
+</div>
+</section>
+<section class="slide" data-part="3">
+<div class="headline">
+        10. Phased Migration Roadmap
+        <span class="headline-tag">Strategy</span>
+</div>
+<div class="subtitle">
+        Large rewrites fail. Successful migrations are incremental, with value delivered at each step.
+      </div>
+<div class="card">
+<h3>Typical Phases</h3>
+<ul>
+<li><strong>Assess</strong> – inventory domains, modules, dependencies, and pain points.</li>
+<li><strong>Design</strong> – define domain boundaries and target service architecture.</li>
+<li><strong>Pilot</strong> – extract one or two non-critical capabilities as services.</li>
+<li><strong>Iterate</strong> – repeat extraction, gradually shrinking the monolith.</li>
+<li><strong>Consolidate</strong> – simplify legacy code, retire dead paths and tables.</li>
+</ul>
+<p class="note">
+          Each step should maintain a working system in production. There is no “flag day”.
+        </p>
+</div>
+</section>
+<section class="slide" data-part="3">
+<div class="headline">
+        11. Choosing Your First Service
+        <span class="headline-tag">Strategy</span>
+</div>
+<div class="subtitle">
+        The first extraction is as much about learning how to migrate as it is about the specific service itself.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Selection Criteria</h3>
+<ul>
+<li>Meaningful business value, but not safety-critical.</li>
+<li>Reasonable domain clarity &amp; limited coupling.</li>
+<li>Good candidate for independent scaling or evolution.</li>
+<li>Allows exercising infra: monitoring, deployment, rollback.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Good Examples</h3>
+<ul>
+<li>Notification service (email/SMS/push).</li>
+<li>Reporting or read-only catalog capabilities.</li>
+<li>Promo/pricing engine that has clear inputs/outputs.</li>
+</ul>
+<p class="note">
+            Avoid starting with the most critical or complex domain (e.g., Payments) as your first service.
+          </p>
+</div>
+</div>
+</section>
+<!-- PART 4: Migration Patterns -->
+<section class="slide part" data-part="4">
+<h2>Part 4</h2>
+<h1>Migration Patterns</h1>
+<p>
+        Patterns that let you peel features away from a monolith while keeping the system running:
+        Strangler Fig, domain-based decomposition, Anti-Corruption Layers, and more.
+      </p>
+</section>
+<section class="slide" data-part="4">
+<div class="headline">
+        12. Strangler Fig Pattern
+        <span class="headline-tag">Migration</span>
+</div>
+<div class="subtitle">
+        Incrementally replace pieces of the monolith by routing selected flows to new services through a façade.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Idea</h3>
+<ul>
+<li>Put a routing layer (API gateway, reverse proxy) in front of the monolith.</li>
+<li>For new or migrated endpoints, route to microservices instead.</li>
+<li>Over time, fewer requests hit the monolith until it can be retired or greatly slimmed down.</li>
+<li>Named after the strangler fig tree that grows around and eventually replaces its host.</li><li>Can take months or years to complete; patience is key.</li><li>Allows gradual migration without disrupting existing functionality.</li></ul>
+<h3 style="margin-top:8px;">Benefits</h3>
+<ul>
+<li>Safe, incremental migration without big-bang rewrites.</li>
+<li>Easy rollback: revert routing rules if needed.</li>
+<li>Allows continuous delivery while modernizing.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Example Routing</h3>
+<pre><code># NGINX-style pseudo config
+location /api/orders/ {
+    proxy_pass http://order-service;
+}
+
+location /api/ {
+    proxy_pass http://legacy-monolith;
+}</code></pre><p class="note">Tools: NGINX, Envoy, AWS API Gateway, Kong. Start with new features, migrate read operations first, use feature flags for gradual traffic shift.</p>
+<p class="note">
+            Start with read-only features or new functionality, then migrate write flows carefully.
+          </p>
+</div>
+</div>
+</section>
+<section class="slide" data-part="4">
+<div class="headline">
+        13. Decompose by Business Capability
+        <span class="headline-tag">Decomposition</span>
+</div>
+<div class="subtitle">
+        Use stable business capabilities (Orders, Billing, Inventory, Customers) as the main axis of decomposition.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Why Capabilities?</h3>
+<ul>
+<li>Capabilities map to how the business thinks and measures value.</li>
+<li>Boundaries tend to be more stable than technical layers.</li>
+<li>Ownership is clear: one team = one or a few capabilities.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Example Capability Map</h3>
+<ul>
+<li>Ordering – place orders, manage lifecycle.</li>
+<li>Billing – invoices, payments, refunds.</li>
+<li>Inventory – stock levels, reservations.</li>
+<li>Customer – profiles, preferences.</li>
+</ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="4">
+<div class="headline">
+        14. Decompose by Subdomain (DDD)
+        <span class="headline-tag">DDD</span>
+</div>
+<div class="subtitle">
+        Domain-Driven Design (DDD) encourages modeling subdomains and bounded contexts, then mapping them to services.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Bounded Contexts</h3>
+<ul>
+<li>Each context has its own model and ubiquitous language.</li>
+<li>Different contexts can use different data models and rules.</li>
+<li>Context boundaries often align with microservice boundaries.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Example Context Map</h3>
+<ul>
+<li>Ordering ↔ Billing (conformist relationship).</li>
+<li>Ordering ↔ Inventory (published language – shared events).</li>
+</ul>
+<p class="note">
+            Bounded contexts give you a vocabulary to decide where service boundaries should exist.
+          </p>
+</div>
+</div>
+</section>
+<section class="slide" data-part="4">
+<div class="headline">
+        15. Branch by Abstraction
+        <span class="headline-tag">Refactoring</span>
+</div>
+<div class="subtitle">
+        Create an abstraction in the monolith, build a new implementation behind it, and switch over without long-lived branches.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Steps</h3>
+<ul>
+<li>Introduce an interface/facade (e.g., <code>OrderService</code>).</li>
+<li>Refactor existing code to depend on the interface, not the concrete implementation.</li>
+<li>Implement the new behavior (maybe a microservice) behind the same interface.</li>
+<li>Switch the binding from old to new implementation, then remove the old one.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Benefits &amp; Risks</h3>
+<ul>
+<li>System stays deployable throughout the migration.</li>
+<li>Enables side-by-side testing of old vs new behavior.</li>
+<li>Requires discipline to clean up abstractions once migration finishes.</li>
+</ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="4">
+<div class="headline">
+        16. Anti-Corruption Layer (ACL)
+        <span class="headline-tag">Migration</span>
+</div>
+<div class="subtitle">
+        Protect new services from inheriting the legacy domain model and quirks of the monolith.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Problem</h3>
+<p>
+            The monolith’s model is messy: overloaded concepts, leaky abstractions, weird data encodings.
+            You don’t want to drag this into new services.
+          </p>
+<h3 style="margin-top:6px;">Solution</h3>
+<ul>
+<li>Introduce a layer that translates between legacy and new models.</li>
+<li>New services speak a clean model; the ACL handles mapping to the monolith.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Benefits</h3>
+<ul>
+<li>Prevents “contagion” of bad legacy concepts.</li>
+<li>Centralizes hacky integration logic.</li>
+<li>Makes it easier to remove the legacy system later.</li>
+</ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="4">
+<div class="headline">
+        17. Backend for Frontend (BFF)
+        <span class="headline-tag">API</span>
+</div>
+<div class="subtitle">
+        Separate backends optimized for each frontend (web, mobile, partner APIs) to keep UIs simple and performant.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Idea</h3>
+<ul>
+<li>Each client gets its own backend tailored to its needs.</li>
+<li>BFFs orchestrate calls to internal services and shape responses.</li>
+<li>Prevents client-specific concerns from leaking into core services.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Example</h3>
+<pre><code>GET /mobile/home
+  → Mobile BFF
+    → calls: Promo, Catalog, Recommendations
+    → returns: compact HomeScreenDTO</code></pre>
+</div>
+</div>
+</section>
+<!-- PART 5: Communication & Reliability -->
+<section class="slide part" data-part="5">
+<h2>Part 5</h2>
+<h1>Communication &amp; Reliability Patterns</h1>
+<p>
+        How services talk to each other (sync vs async) and how we keep the whole system healthy
+        in the face of partial failures.
+      </p>
+</section>
+<section class="slide" data-part="5">
+<div class="headline">
+        18. Sync vs Async Communication
+        <span class="headline-tag">Comms</span>
+</div>
+<div class="subtitle">
+        Choosing between request/response and message-driven interaction has big consequences for coupling and resilience.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Synchronous (Request/Response)</h3>
+<ul>
+<li>Client waits for a response (HTTP/gRPC).</li>
+<li>Simple mental model: call → result.</li>
+<li>Tight time coupling: both sides must be up.</li>
+<li>Good for queries and immediate user feedback.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Asynchronous (Messaging/Events)</h3>
+<ul>
+<li>Publisher doesn’t wait for consumer to finish.</li>
+<li>Looser coupling, better resilience and elasticity.</li>
+<li>Eventual consistency and more complex debugging.</li>
+<li>Great for background work and workflows.</li>
+</ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="5">
+<div class="headline">
+        19. API Gateway
+        <span class="headline-tag">API</span>
+</div>
+<div class="subtitle">
+        A single entry point for external clients that handles cross-cutting concerns and routing to services.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Responsibilities</h3>
+<ul>
+<li>Authentication and authorization.</li>
+<li>TLS termination, rate limiting, request validation.</li>
+<li>Routing to internal services based on path/host.</li>
+<li>Optionally: response aggregation, protocol translation.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Simple Route Config</h3>
+<pre><code>routes:
+  - path: /api/orders/**
+    service: order-service
+  - path: /api/payments/**
+    service: payment-service</code></pre>
+</div>
+</div>
+</section>
+<section class="slide" data-part="5">
+<div class="headline">
+        20. Circuit Breaker &amp; Timeouts
+        <span class="headline-tag">Resilience</span>
+</div>
+<div class="subtitle">
+        Protect your system from cascading failures by failing fast and avoiding endless waiting.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Timeouts &amp; Retries</h3>
+<ul>
+<li>Always set timeouts on outbound calls.</li>
+<li>Use retries with backoff for transient errors only.</li>
+<li>Combine with idempotent operations to avoid duplicate side effects.</li>
+<li>Set aggressive timeouts: 95th percentile latency + buffer (typically 100-500ms for internal calls).</li><li>Use exponential backoff for retries: 100ms, 200ms, 400ms, 800ms (max 3-5 retries).</li><li>Only retry idempotent operations or use idempotency keys.</li><li>Implement timeout budgets: if upstream has 200ms budget, downstream gets 150ms.</li></ul>
+</div>
+<div class="card">
+<h3>Circuit Breaker</h3>
+<ul>
+<li>Monitor failure rate to a dependency.</li>
+<li>Open the breaker when errors/timeouts exceed a threshold.</li>
+<li>Fail fast instead of waiting on a broken dependency.</li>
+<li>Eventually probe to see if the dependency is healthy again.</li>
+<li>Three states: Closed (normal), Open (failing fast), Half-Open (testing recovery).</li><li>Common thresholds: open after 5 failures in 60 seconds, half-open after 30 seconds.</li><li>Libraries: Hystrix (deprecated), Resilience4j (Java), Polly (.NET), go-resilience (Go).</li><li>Return fallback responses when circuit is open (cached data, default values, error messages).</li></ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="5">
+<div class="headline">
+        21. Bulkheads &amp; Service Discovery
+        <span class="headline-tag">Infra</span>
+</div>
+<div class="subtitle">
+        Isolate resource usage between dependencies and find service instances dynamically.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Bulkheads</h3>
+<ul>
+<li>Separate connection pools and thread pools per dependency.</li>
+<li>Prevents one slow/broken dependency from exhausting all resources.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Service Discovery</h3>
+<ul>
+<li>Service instances register themselves with a registry.</li>
+<li>Clients or load balancers query registry to find available instances.</li>
+<li>Essential in dynamic environments (Kubernetes, autoscaling).</li>
+</ul>
+</div>
+</div>
+</section>
+<!-- PART 6: Data & Transactions -->
+<section class="slide part" data-part="6">
+<h2>Part 6</h2>
+<h1>Data &amp; Transaction Patterns</h1>
+<p>
+        With each service owning its data, we need new patterns to maintain correctness and a good user experience:
+        Sagas, Event Sourcing, CQRS, and Outbox.
+      </p>
+</section>
+<section class="slide" data-part="6">
+<div class="headline">
+        22. Database per Service
+        <span class="headline-tag">Data</span>
+</div>
+<div class="subtitle">
+        Each service owns its schema and database; other services go through its API, not directly to its tables.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Benefits</h3>
+<ul>
+<li>Clear ownership and encapsulation of data.</li>
+<li>Independent schema evolution per service.</li>
+<li>Can choose storage technology per use-case.</li>
+<li>Allows choosing optimal database per use case: PostgreSQL for transactions, MongoDB for documents, Redis for caching.</li><li>Schema changes don't require coordination across teams.</li><li>Better security: each service only has access to its own data.</li><li>Easier to scale individual databases based on service load.</li></ul>
+</div>
+<div class="card">
+<h3>Trade-offs</h3>
+<ul>
+<li>No cross-service joins or ACID transactions.</li>
+<li>Need to denormalize/replicate data for reporting and UX.</li>
+<li>Data duplication: customer data might exist in Order, Billing, and Shipping services.</li><li>Complex queries: need API composition or read models to join data across services.</li><li>Eventual consistency: updates to one service's data may not be immediately visible to others.</li><li>Transaction management: must use distributed transaction patterns (Sagas) instead of ACID.</li></ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="6">
+<div class="headline">
+        23. Saga Pattern – Choreography
+        <span class="headline-tag">Transaction</span>
+</div>
+<div class="subtitle">
+        A distributed transaction implemented as a sequence of local transactions, coordinated by events between services.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Flow</h3>
+<ul>
+<li>Order service creates order and publishes <code>OrderCreated</code>.</li>
+<li>Inventory reserves stock and publishes <code>StockReserved</code>.</li>
+<li>Payment charges customer and publishes <code>PaymentCompleted</code>.</li>
+<li>Order marks itself as confirmed or rolls back using compensation events.</li>
+<li>Each service listens for events and reacts independently.</li><li>No central coordinator; services are loosely coupled.</li><li>Compensation is handled by each service when it receives a compensating event.</li></ul>
+</div>
+<div class="card">
+<h3>Pros &amp; Cons</h3>
+<ul>
+<li>Highly decoupled services; no central orchestrator.</li>
+<li>Harder to understand the full flow; logic is scattered.</li>
+<li>Debugging requires good tracing and logging.</li>
+<li><strong>Pros:</strong> No single point of failure, services are autonomous, easier to add new services.</li><li><strong>Cons:</strong> Hard to understand full flow, difficult to debug, compensation logic scattered.</li><li><strong>Best for:</strong> Simple workflows, when services are truly independent, event-driven architectures.</li></ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="6">
+<div class="headline">
+        24. Saga Pattern – Orchestration
+        <span class="headline-tag">Transaction</span>
+</div>
+<div class="subtitle">
+        A dedicated orchestrator coordinates the saga steps, sending commands to services and handling responses.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Example Orchestrator</h3>
+<pre><code>function placeOrderSaga(cmd) {
+  const orderId = orderService.create(cmd);
+  try {
+    inventoryService.reserve(orderId);
+    paymentService.charge(orderId);
+    orderService.markApproved(orderId);
+  } catch (err) {
+    inventoryService.release(orderId);
+    paymentService.refund(orderId);
+    orderService.markRejected(orderId);
+  }
+}</code></pre><p class="note">Orchestrator maintains saga state and coordinates all steps. Can be implemented as a state machine (AWS Step Functions, Temporal, Camunda).</p>
+</div>
+<div class="card">
+<h3>Pros &amp; Cons</h3>
+<ul>
+<li>Flow is explicit and centralized.</li>
+<li>Easier to reason about compensation logic.</li>
+<li>Orchestrator can become complex; keep it focused on coordination, not business logic.</li>
+<li><strong>Pros:</strong> Centralized control, easier to understand flow, better for complex workflows.</li><li><strong>Cons:</strong> Orchestrator can become bottleneck, single point of failure, more coupling.</li><li><strong>Best for:</strong> Complex workflows, when you need centralized control, business process management.</li></ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="6">
+<div class="headline">
+        25. Event Sourcing
+        <span class="headline-tag">Data</span>
+</div>
+<div class="subtitle">
+        Persist a sequence of domain events instead of just the final state; rebuild state by replaying them.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Benefits</h3>
+<ul>
+<li>Perfect audit log; full history of changes.</li>
+<li>Easy to reconstruct past state for debugging or compliance.</li>
+<li>Event streams can drive projections and other services.</li>
+<li>Time travel: reconstruct state at any point in time for debugging or auditing.</li><li>Event replay: reprocess events to fix bugs or create new projections.</li><li>Natural fit for event-driven architectures and CQRS.</li><li>Compliance: complete audit trail of all changes.</li></ul>
+</div>
+<div class="card">
+<h3>Example Event Stream</h3>
+<pre><code>OrderCreated(orderId=123, customerId=42)
+ItemAdded(orderId=123, sku="PIZZA", qty=2)
+OrderPaid(orderId=123, amount=24.00)</code></pre><p class="note">Event store: specialized database (EventStore, Apache Kafka, AWS Kinesis). Use snapshots to avoid replaying all events. Projections build read models from events.</p>
+</div>
+</div>
+</section>
+<section class="slide" data-part="6">
+<div class="headline">
+        26. CQRS – Command Query Responsibility Segregation
+        <span class="headline-tag">Data</span>
+</div>
+<div class="subtitle">
+        Separate the write model (commands, invariants) from read models optimized for queries.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Principles</h3>
+<ul>
+<li>Commands change state using a rich domain model.</li>
+<li>Queries read from one or more projections optimized for access patterns.</li>
+<li>Read models are often eventually consistent.</li>
+<li>Commands: change state, enforce business rules, return success/failure.</li><li>Queries: read optimized data, no business logic, can be denormalized.</li><li>Read models updated asynchronously from write model (eventual consistency).</li><li>Allows independent scaling of read and write workloads.</li></ul>
+</div>
+<div class="card">
+<h3>API Shape</h3>
+<pre><code>POST /orders/command/place
+GET  /orders/query/by-customer/{customerId}</code></pre><p class="note">Write: POST /orders (command). Read: GET /orders/{id} (query, eventually consistent). Can have multiple read models: UI, reporting, search. Useful when read/write patterns differ significantly.</p>
+</div>
+</div>
+</section>
+<section class="slide" data-part="6">
+<div class="headline">
+        27. Outbox &amp; Idempotency
+        <span class="headline-tag">Reliable Data</span>
+</div>
+<div class="subtitle">
+        Ensure that changes to local state and publication of messages happen reliably, even if services crash.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Outbox Pattern</h3>
+<ul>
+<li>Write domain state and an “outbox” record in the same transaction.</li>
+<li>A background worker reads the outbox and publishes messages/events.</li>
+<li>Prevents lost messages when a service crashes after commit but before publish.</li>
+<li>Transactional Outbox: write to business table and outbox table in same transaction.</li><li>Outbox publisher: background process reads outbox and publishes to message broker.</li><li>Prevents lost messages: if service crashes, unprocessed outbox records are retried.</li><li>Implementations: Debezium (CDC), custom poller, database triggers.</li></ul>
+</div>
+<div class="card">
+<h3>Idempotency</h3>
+<ul>
+<li>Handle duplicate messages safely.</li>
+<li>Use idempotency keys / processed-message tables.</li>
+<li>Idempotency key: unique identifier for each operation (UUID, request ID).</li><li>Idempotency store: track processed keys (Redis, database table) with TTL.</li><li>Check before processing: if key exists, return cached response instead of reprocessing.</li><li>Critical for retries: ensures duplicate requests don't cause duplicate side effects.</li></ul>
+</div>
+</div>
+</section>
+<!-- PART 7: Observability & Operations -->
+<section class="slide part" data-part="7">
+<h2>Part 7</h2>
+<h1>Observability &amp; Operations</h1>
+<p>
+        With many moving parts, you must be able to see what’s happening and react quickly when things break.
+        Observability is not optional in a microservices world.
+      </p>
+</section>
+<section class="slide" data-part="7">
+<div class="headline">
+        28. Logging, Metrics, Tracing
+        <span class="headline-tag">Observability</span>
+</div>
+<div class="subtitle">
+        The three core pillars that help you understand and debug a distributed system.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Structured Logging</h3>
+<ul>
+<li>Machine-parsable (e.g., JSON) with correlation IDs.</li>
+<li>Centralized (ELK, Loki, etc.) for cross-service search.</li>
+<li>Structured logs: JSON format with consistent fields (timestamp, level, service, trace_id, user_id).</li><li>Correlation IDs: propagate through all service calls to trace a request end-to-end.</li><li>Centralized aggregation: ELK Stack (Elasticsearch, Logstash, Kibana), Loki, Splunk.</li><li>Log levels: ERROR (actionable), WARN (monitor), INFO (business events), DEBUG (development only).</li></ul>
+</div>
+<div class="card">
+<h3>Metrics &amp; Traces</h3>
+<ul>
+<li>Service-level metrics: latency, error rate, throughput.</li>
+<li>SLIs/SLOs for critical journeys.</li>
+<li>Distributed tracing to follow a request across services.</li>
+<li>Four golden signals: Latency, Traffic, Errors, Saturation (USE method).</li><li>SLIs: Service Level Indicators (e.g., 99.9% of requests &lt; 200ms).</li><li>SLOs: Service Level Objectives (e.g., maintain SLI 99.9% of the time).</li><li>Tools: Prometheus (metrics), Grafana (visualization), Datadog, New Relic.</li><li>Distributed tracing: OpenTelemetry, Jaeger, Zipkin to visualize request flow across services.</li></ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="7">
+<div class="headline">
+        29. Health Checks &amp; Readiness
+        <span class="headline-tag">Operations</span>
+</div>
+<div class="subtitle">
+        Expose endpoints that allow orchestrators and load balancers to know whether to route traffic to an instance.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Types</h3>
+<ul>
+<li><strong>Liveness</strong> – should this process be restarted?</li>
+<li><strong>Readiness</strong> – is this instance ready to receive traffic?</li>
+<li><strong>Startup:</strong> Has it finished initialization? Kubernetes uses this before marking ready.</li><li>Each check should be fast (&lt; 1 second) and not depend on external services.</li></ul>
+</div>
+<div class="card">
+<h3>Usage</h3>
+<ul>
+<li>Kubernetes uses probes to restart and remove pods.</li>
+<li>Load balancers route traffic only to ready instances.</li>
+<li>Kubernetes probes: livenessProbe, readinessProbe, startupProbe with configurable thresholds.</li><li>Load balancers: health check endpoints determine which instances receive traffic.</li><li>Circuit breakers: can use health check status to open/close circuits.</li><li>Monitoring: alert when health check failure rate exceeds threshold.</li></ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="7">
+<div class="headline">
+        30. Deployment Patterns
+        <span class="headline-tag">Operations</span>
+</div>
+<div class="subtitle">
+        Reduce risk while deploying new versions: blue/green and canary releases.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Blue/Green</h3>
+<ul>
+<li>Two identical environments: Blue (current) and Green (new).</li>
+<li>Shift traffic from Blue to Green when ready.</li>
+<li>Fast rollback by switching back to Blue.</li>
+<li>Requires 2x infrastructure capacity during deployment (cost consideration).</li><li>Instant rollback: just switch traffic back to previous environment.</li><li>Database migration: must be backward compatible or use separate databases.</li><li>Tools: AWS CodeDeploy, Spinnaker, Kubernetes with multiple deployments.</li></ul>
+</div>
+<div class="card">
+<h3>Canary</h3>
+<ul>
+<li>Expose only a small percentage of traffic to the new version.</li>
+<li>Monitor metrics; if healthy, gradually increase traffic share.</li>
+<li>If issues, roll back to the old version quickly.</li>
+<li>Start with 1-5% of traffic, gradually increase to 10%, 25%, 50%, 100%.</li><li>Monitor key metrics: error rate, latency, throughput, business metrics.</li><li>Automated rollback: if error rate increases or latency degrades, automatically revert.</li><li>Tools: Istio (service mesh), Flagger, Argo Rollouts, Spinnaker.</li><li>A/B testing: can route specific users (e.g., beta testers) to canary version.</li></ul>
+</div>
+</div>
+</section>
+<!-- PART 8: Org & Anti-patterns -->
+<section class="slide part" data-part="8">
+<h2>Part 8</h2>
+<h1>Org Patterns, Anti-Patterns &amp; Summary</h1>
+<p>
+        Microservices are socio-technical: team structure, ownership, and culture matter as much as the architecture itself.
+      </p>
+</section>
+<section class="slide" data-part="8">
+<div class="headline">
+        31. Team Topologies &amp; Ownership
+        <span class="headline-tag">Org</span>
+</div>
+<div class="subtitle">
+        Organize teams around streams of change, and give them end-to-end service ownership.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Stream-Aligned Teams</h3>
+<ul>
+<li>Own a product area or value stream (e.g., Checkout, Search).</li>
+<li>Own one or more services plus their data and operations.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Platform Teams</h3>
+<ul>
+<li>Provide paved roads for CI/CD, observability, runtime.</li>
+<li>Allow product teams to focus on business logic, not plumbing.</li>
+</ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="8">
+<div class="headline">
+        32. Distributed Monolith Anti-Pattern
+        <span class="headline-tag">Anti-pattern</span>
+</div>
+<div class="subtitle">
+        Many services in name, but tightly coupled in practice, with painful coordinated releases.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Symptoms</h3>
+<ul>
+<li>Changes require touching and deploying multiple services.</li>
+<li>Heavy synchronous call chains with high latency.</li>
+<li>Services share databases or schemas.</li>
+<li>Deployment coupling: changes to one service require deploying multiple services.</li><li>Database sharing: services access the same database or schema.</li><li>Tight coupling: services know about each other's internal structure.</li><li>Synchronous chains: long chains of synchronous calls (A → B → C → D).</li></ul>
+</div>
+<div class="card">
+<h3>Root Causes</h3>
+<ul>
+<li>Poorly chosen boundaries; split by technical layers, not domains.</li>
+<li>Skipping DDD and data ownership discipline.</li>
+<li>Too much shared code and shared libraries.</li>
+<li>Wrong boundaries: split by technical layers (UI service, API service, DB service) instead of domains.</li><li>Shared libraries: too much shared code creates coupling and versioning hell.</li><li>Lack of DDD: not understanding domain boundaries leads to poor service design.</li><li>Premature optimization: splitting too early before understanding the domain.</li></ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="8">
+<div class="headline">
+        33. Over-Splitting Services
+        <span class="headline-tag">Anti-pattern</span>
+</div>
+<div class="subtitle">
+        Excessively fine-grained services create coordination overhead, latency, and operational cost.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Problem</h3>
+<ul>
+<li>One simple change spans many services.</li>
+<li>Too many hops increase latency and failure probability.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Guidance</h3>
+<ul>
+<li>Start with coarser-grained services; split when justified by data.</li>
+<li>Use metrics (change coupling, deployment frequency) to decide splits.</li>
+</ul>
+</div>
+</div>
+</section>
+<section class="slide" data-part="8">
+<div class="headline">
+        34. Decision Checklist
+        <span class="headline-tag">Summary</span>
+</div>
+<div class="subtitle">
+        Use this checklist when considering microservices or planning migration phases.
+      </div>
+<div class="card">
+<h3>Before Adopting Microservices</h3>
+<ul>
+<li>Do we have clear, stable-ish domain boundaries?</li>
+<li>Do we have basic observability and CI/CD in place?</li>
+<li>Is the monolith genuinely slowing us down in measurable ways?</li>
+</ul>
+<h3 style="margin-top:8px;">During Migration</h3>
+<ul>
+<li>Are we migrating incrementally, not rewriting everything?</li>
+<li>Are we enforcing “database per service” and clear ownership?</li>
+<li>Are we building resilience (timeouts, retries, circuit breakers)?</li>
+<li>Are we investing in platform and developer experience?</li>
+</ul>
+</div>
+</section>
+<section class="slide" data-part="8">
+<div class="headline">
+        35. Summary &amp; Key Takeaways
+        <span class="headline-tag">Summary</span>
+</div>
+<div class="subtitle">
+        Monoliths and microservices are tools. Choose the one – or combination – that best supports your product and teams today.
+      </div>
+<div class="two-col">
+<div class="card">
+<h3>Monolith vs Microservices</h3>
+<ul>
+<li>Monoliths maximize simplicity and speed early on.</li>
+<li>Microservices trade complexity in code for complexity in operations.</li>
+<li>There is no “forever” architecture; systems evolve with the business.</li>
+</ul>
+</div>
+<div class="card">
+<h3>The Journey</h3>
+<ul>
+<li>Start with a well-structured monolith.</li>
+<li>Migrate incrementally using patterns like Strangler, Sagas, and BFFs.</li>
+<li>Invest in teams, platform, and culture – architecture follows.</li>
+</ul>
+</div>
+</div>
+</section>
+</div>
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let currentIndex = 0;
+
+  function showSlide(i) {
+    if (i < 0 || i >= slides.length) return;
+    slides.forEach(s => s.classList.remove('active'));
+    slides[i].classList.add('active');
+    currentIndex = i;
+    document.getElementById('current-slide').textContent = (i + 1).toString();
+    document.getElementById('total-slides').textContent = slides.length.toString();
+
+    const part = slides[i].getAttribute('data-part') || '1';
+    const select = document.getElementById('chapter-select');
+    if (select && select.value !== part) {
+      select.value = part;
+    }
+  }
+
+  document.getElementById('prev-btn').addEventListener('click', () => {
+    showSlide(Math.max(0, currentIndex - 1));
+  });
+  document.getElementById('next-btn').addEventListener('click', () => {
+    showSlide(Math.min(slides.length - 1, currentIndex + 1));
+  });
+
+  document.getElementById('chapter-select').addEventListener('change', (e) => {
+    const part = e.target.value;
+    const targetIndex = slides.findIndex(s => s.getAttribute('data-part') === part);
+    if (targetIndex >= 0) showSlide(targetIndex);
+  });
+
+  showSlide(0);
+</script>
+</body>
+</html>
