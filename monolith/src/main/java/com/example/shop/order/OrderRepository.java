@@ -1,1 +1,6 @@
-package com.example.shop.order; import org.springframework.data.jpa.repository.JpaRepository; public interface OrderRepository extends JpaRepository<OrderEntity,Long>{}
+package com.example.shop.order;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
+}
